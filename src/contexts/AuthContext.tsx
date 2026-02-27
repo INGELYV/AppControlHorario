@@ -151,9 +151,13 @@ export function useAuth() {
 function mapAuthError(msg: string): string {
     const map: Record<string, string> = {
         'Invalid login credentials': 'Email o contraseña incorrectos',
-        'Email not confirmed': 'Por favor verifica tu email',
+        'Email not confirmed': 'Por favor verifica tu email antes de iniciar sesión',
         'User already registered': 'Este email ya está registrado',
-        'Password should be at least 6 characters': 'La contraseña debe tener al menos 8 caracteres',
+        'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
+        'Signups not allowed for this instance': 'El registro de usuarios está deshabilitado',
+        'Email rate limit exceeded': 'Demasiados intentos. Espera unos minutos.',
+        'For security purposes, you can only request this after 60 seconds.': 'Espera 60 segundos antes de intentar de nuevo.',
     };
-    return map[msg] || 'Ha ocurrido un error. Intenta nuevamente.';
+    // En desarrollo, mostrar el error real para depuración
+    return map[msg] || `Error: ${msg}`;
 }
