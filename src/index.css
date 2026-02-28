@@ -457,6 +457,12 @@ a:hover {
   flex-direction: column;
 }
 
+@media (min-width: 1024px) {
+  .app-layout {
+    padding-left: var(--sidebar-width);
+  }
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -636,10 +642,17 @@ a:hover {
 
 .app-main {
   flex: 1;
-  padding: var(--space-lg);
+  padding: var(--space-md);
   max-width: 1200px;
-  width: 100%;
+  width: auto;
   margin: 0 auto;
+}
+
+/* On mobile, we might want less horizontal padding to fit cards better */
+@media (max-width: 480px) {
+  .app-main {
+    padding: var(--space-md) var(--space-sm);
+  }
 }
 
 .mobile-menu-btn {
@@ -1411,7 +1424,6 @@ a:hover {
   }
 
   .app-main {
-    margin-left: var(--sidebar-width);
     padding: var(--space-xl) var(--space-2xl);
   }
 
