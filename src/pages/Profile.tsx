@@ -6,6 +6,7 @@ import { User, Lock, Trash2, Save } from 'lucide-react';
 export default function ProfilePage() {
     const { profile, user, updateProfile, updatePassword, signOut } = useAuth();
     const [fullName, setFullName] = useState(profile?.full_name || '');
+    const [maritalStatus, setMaritalStatus] = useState(profile?.marital_status || '');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profileLoading, setProfileLoading] = useState(false);
@@ -17,7 +18,13 @@ export default function ProfilePage() {
 
     async function handleUpdateProfile(e: React.FormEvent) {
         e.preventDefault(); setProfileErr(''); setProfileMsg(''); setProfileLoading(true);
-        try { await updateProfile({ full_name: fullName.trim() }); setProfileMsg('Perfil actualizado'); }
+        try {
+            await updateProfile({
+                full_name: fullName.trim(),
+                marital_status: maritalStatus
+            });
+            setProfileMsg('Perfil actualizado');
+        }
         catch (err) { setProfileErr(err instanceof Error ? err.message : 'Error'); }
         finally { setProfileLoading(false); }
     }
@@ -60,6 +67,21 @@ export default function ProfilePage() {
                     {profileErr && <div className="form-error">{profileErr}</div>}
                     {profileMsg && <div className="form-success">{profileMsg}</div>}
                     <div className="form-group"><label htmlFor="pn" className="form-label">Nombre Completo</label><input id="pn" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="form-input form-input--dark" required /></div>
+                    <div className="form-group">
+                        <label htmlFor="ms" className="form-label">Estado Civil</label>
+                        <select
+                            id="ms"
+                            value={maritalStatus}
+                            onChange={(e) => setMaritalStatus(e.target.value)}
+                            className="form-input form-input--dark"
+                        >
+                            <option value="">Selecciona una opción</option>
+                            <option value="Soltero">Soltero/a</option>
+                            <option value="Casado">Casado/a</option>
+                            <option value="Viudo">Viudo/a</option>
+                            <option value="Separado">Separado/a</option>
+                        </select>
+                    </div>
                     <div className="form-group"><label className="form-label">Email</label><input type="email" value={user?.email || ''} className="form-input form-input--dark" disabled /></div>
                     <button type="submit" disabled={profileLoading} className="btn btn-primary"><Save size={16} />{profileLoading ? 'Guardando...' : 'Guardar Cambios'}</button>
                 </form>

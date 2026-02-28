@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT NOT NULL DEFAULT '',
     role TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('employee', 'admin')),
+    marital_status TEXT,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
