@@ -15,6 +15,7 @@ const ReportsPage = lazy(() => import('@/pages/Reports'));
 const ProfilePage = lazy(() => import('@/pages/Profile'));
 const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboard'));
 const AdminReportsPage = lazy(() => import('@/pages/AdminReports'));
+const AdminTablePage = lazy(() => import('@/pages/AdminTable'));
 
 const PageLoader = () => <div className="protected-route-loader"><div className="loader-spinner" /></div>;
 
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProtectedPage><ProfilePage /></ProtectedPage>} />
         <Route path="/admin" element={<AdminPage><AdminDashboardPage /></AdminPage>} />
         <Route path="/admin/reports" element={<AdminPage><AdminReportsPage /></AdminPage>} />
+        <Route path="/admin/table" element={<AdminPage><AdminTablePage /></AdminPage>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

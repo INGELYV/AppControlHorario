@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Clock, BarChart3, User, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Clock, BarChart3, User, LogOut, Menu, X, Table } from 'lucide-react';
 import { useState } from 'react';
 
 const NAV_ITEMS = [
@@ -18,7 +18,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     if (isAdmin) {
         navItems.push(
             { path: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard size={20} className="text-accent" /> },
-            { path: '/admin/reports', label: 'Admin Reportes', icon: <BarChart3 size={20} className="text-accent" /> }
+            { path: '/admin/reports', label: 'Admin Reportes', icon: <BarChart3 size={20} className="text-accent" /> },
+            { path: '/admin/table', label: 'Tabla Maestra', icon: <Table size={20} className="text-accent" /> }
         );
     }
 
