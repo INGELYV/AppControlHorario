@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('employee', 'admin')),
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -126,8 +127,12 @@ CREATE POLICY "Users can delete own pauses"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, full_name)
-    VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', ''));
+    INSERT INTO public.profiles (id, full_name, role)
+    VALUES (
+        NEW.id, 
+        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+        CASE WHEN NEW.email = 'ingelyv@gmail.com' THEN 'admin' ELSE 'employee' END
+    );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

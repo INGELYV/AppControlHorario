@@ -13,6 +13,8 @@ const DashboardPage = lazy(() => import('@/pages/Dashboard'));
 const HistoryPage = lazy(() => import('@/pages/History'));
 const ReportsPage = lazy(() => import('@/pages/Reports'));
 const ProfilePage = lazy(() => import('@/pages/Profile'));
+const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboard'));
+const AdminReportsPage = lazy(() => import('@/pages/AdminReports'));
 
 const PageLoader = () => <div className="protected-route-loader"><div className="loader-spinner" /></div>;
 
@@ -33,6 +35,13 @@ function ProtectedPage({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AdminPage({ children }: { children: React.ReactNode }) {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <ProtectedPage>{children}</ProtectedPage>;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -44,6 +53,8 @@ function AppRoutes() {
         <Route path="/history" element={<ProtectedPage><HistoryPage /></ProtectedPage>} />
         <Route path="/reports" element={<ProtectedPage><ReportsPage /></ProtectedPage>} />
         <Route path="/profile" element={<ProtectedPage><ProfilePage /></ProtectedPage>} />
+        <Route path="/admin" element={<AdminPage><AdminDashboardPage /></AdminPage>} />
+        <Route path="/admin/reports" element={<AdminPage><AdminReportsPage /></AdminPage>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

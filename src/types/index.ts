@@ -1,7 +1,9 @@
-// ─── User & Profile ──────────────────────────────────────────
+export type UserRole = 'employee' | 'admin';
+
 export interface Profile {
     id: string;
     full_name: string;
+    role: UserRole;
     avatar_url?: string;
     created_at: string;
     updated_at: string;

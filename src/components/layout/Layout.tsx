@@ -11,8 +11,16 @@ const NAV_ITEMS = [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-    const { profile, signOut } = useAuth();
+    const { profile, signOut, isAdmin } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const navItems = [...NAV_ITEMS];
+    if (isAdmin) {
+        navItems.push(
+            { path: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard size={20} className="text-accent" /> },
+            { path: '/admin/reports', label: 'Admin Reportes', icon: <BarChart3 size={20} className="text-accent" /> }
+        );
+    }
 
     async function handleLogout() { if (window.confirm('¿Deseas cerrar sesión?')) await signOut(); }
 
@@ -29,10 +37,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="sidebar-header"><Clock size={28} className="brand-icon" /><span className="brand-name">Control Horario</span></div>
                 <div className="sidebar-user">
                     <div className="user-avatar user-avatar--lg">{profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}</div>
-                    <div className="user-info"><span className="user-name">{profile?.full_name || 'Usuario'}</span><span className="user-role">Empleado</span></div>
+                    <div className="user-info">
+                        <span className="user-name">{profile?.full_name || 'Usuario'}</span>
+                        <span className="user-role">{isAdmin ? 'Administrador' : 'Empleado'}</span>
+                    </div>
                 </div>
                 <nav className="sidebar-nav">
-                    {NAV_ITEMS.map((item) => (
+                    {navItems.map((item) => (
                         <NavLink key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`} end={item.path === '/'}>
                             {item.icon}<span>{item.label}</span>
                         </NavLink>

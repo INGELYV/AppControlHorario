@@ -8,6 +8,7 @@ interface AuthContextType {
     profile: Profile | null;
     session: Session | null;
     loading: boolean;
+    isAdmin: boolean;
     signUp: (email: string, password: string, fullName: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
@@ -18,16 +19,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ADMIN_EMAIL = 'ingelyv@gmail.com';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const isAdmin = profile?.role === 'admin' || user?.email === ADMIN_EMAIL;
+
     // ─── Supabase Profile Loader ────────────────────────────
-    async function loadProfile(userId: string) {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-        if (!error && data) setProfile(data);
+    async function loadProfile(userId: string, email?: string) {
+        let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+
+        if (error) {
+            console.error('Error loading profile:', error);
+            // Si el error es de permiso, puede que sea porque acabamos de registrar el usuario
+        }
+
+        if (data) {
+            // Asegurar que ingelyv@gmail.com sea admin y tenga su nombre correcto
+            if (email === ADMIN_EMAIL) {
+                const needsUpdate = data.role !== 'admin' || data.full_name === 'PABLO MARMOL';
+                if (needsUpdate) {
+                    const updates = { role: 'admin', full_name: 'INGELYV (Admin)' };
+                    await supabase.from('profiles').update(updates).eq('id', userId);
+                    setProfile({ ...data, ...updates } as Profile);
+                } else {
+                    setProfile(data as Profile);
+                }
+            } else {
+                setProfile(data as Profile);
+            }
+        } else if (email === ADMIN_EMAIL) {
+            // Caso extremo: No hay perfil en DB aún pero es el admin email
+            setProfile({
+                id: userId,
+                full_name: 'INGELYV (Admin)',
+                role: 'admin',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        }
     }
 
     useEffect(() => {
@@ -35,14 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.auth.getSession().then(({ data: { session: s } }) => {
             setSession(s);
             setUser(s?.user ?? null);
-            if (s?.user) loadProfile(s.user.id);
+            if (s?.user) loadProfile(s.user.id, s.user.email);
             setLoading(false);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
             setSession(s);
             setUser(s?.user ?? null);
-            if (s?.user) loadProfile(s.user.id);
+            if (s?.user) loadProfile(s.user.id, s.user.email);
             else setProfile(null);
             setLoading(false);
         });
@@ -84,11 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!user) throw new Error('No hay sesión activa');
         const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
         if (error) throw new Error('Error al actualizar perfil');
-        await loadProfile(user.id);
+        await loadProfile(user.id, user.email);
     }
 
     return (
-        <AuthContext.Provider value={{ user, profile, session, loading, signUp, signIn, signOut, resetPassword, updatePassword, updateProfile }}>
+        <AuthContext.Provider value={{ user, profile, session, loading, isAdmin, signUp, signIn, signOut, resetPassword, updatePassword, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );
