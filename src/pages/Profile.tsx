@@ -7,6 +7,8 @@ export default function ProfilePage() {
     const { profile, user, updateProfile, updatePassword, signOut } = useAuth();
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [maritalStatus, setMaritalStatus] = useState(profile?.marital_status || '');
+    const [phone, setPhone] = useState(profile?.phone || '');
+    const [birthDate, setBirthDate] = useState(profile?.birth_date || '');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profileLoading, setProfileLoading] = useState(false);
@@ -21,7 +23,9 @@ export default function ProfilePage() {
         try {
             await updateProfile({
                 full_name: fullName.trim(),
-                marital_status: maritalStatus
+                marital_status: maritalStatus,
+                phone: phone.trim(),
+                birth_date: birthDate
             });
             setProfileMsg('Perfil actualizado');
         }
@@ -81,6 +85,27 @@ export default function ProfilePage() {
                             <option value="Viudo">Viudo/a</option>
                             <option value="Separado">Separado/a</option>
                         </select>
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="ph" className="form-label">Teléfono</label>
+                        <input
+                            id="ph"
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="form-input form-input--dark"
+                            placeholder="+56 9 XXXX XXXX"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="bd" className="form-label">Fecha de Nacimiento</label>
+                        <input
+                            id="bd"
+                            type="date"
+                            value={birthDate}
+                            onChange={(e) => setBirthDate(e.target.value)}
+                            className="form-input form-input--dark"
+                        />
                     </div>
                     <div className="form-group"><label className="form-label">Email</label><input type="email" value={user?.email || ''} className="form-input form-input--dark" disabled /></div>
                     <button type="submit" disabled={profileLoading} className="btn btn-primary"><Save size={16} />{profileLoading ? 'Guardando...' : 'Guardar Cambios'}</button>
