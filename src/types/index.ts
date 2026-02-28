@@ -55,25 +55,3 @@ export interface WeeklyStats {
 // ─── App State ───────────────────────────────────────────────
 export type WorkStatus = 'idle' | 'working' | 'paused';
 
-// ─── Supabase Database Types ─────────────────────────────────
-export interface Database {
-    public: {
-        Tables: {
-            profiles: {
-                Row: Profile;
-                Insert: Omit<Profile, 'created_at' | 'updated_at'>;
-                Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
-            };
-            time_entries: {
-                Row: TimeEntry;
-                Insert: Pick<TimeEntry, 'user_id' | 'date' | 'clock_in'> & Partial<TimeEntry>;
-                Update: Partial<Omit<TimeEntry, 'id' | 'user_id' | 'created_at'>>;
-            };
-            pauses: {
-                Row: Pause;
-                Insert: Pick<Pause, 'time_entry_id' | 'start_time' | 'type'> & Partial<Pause>;
-                Update: Partial<Omit<Pause, 'id' | 'time_entry_id' | 'created_at'>>;
-            };
-        };
-    };
-}

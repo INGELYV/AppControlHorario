@@ -2,14 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/types';
-import {
-    isDemoMode, demoSignUp, demoSignIn, demoSignOut,
-    demoGetSession, demoUpdateProfile, demoUpdatePassword,
-    type DemoUser,
-} from '@/lib/mock-service';
 
 interface AuthContextType {
-    user: User | DemoUser | null;
+    user: User | null;
     profile: Profile | null;
     session: Session | null;
     loading: boolean;
@@ -24,12 +19,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | DemoUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
-
-    const demo = isDemoMode();
 
     // ─── Supabase Profile Loader ────────────────────────────
     async function loadProfile(userId: string) {
@@ -38,15 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
-        if (demo) {
-            // Demo: restaurar sesión desde localStorage
-            const { user: demoUser, profile: demoProfile } = demoGetSession();
-            setUser(demoUser);
-            setProfile(demoProfile);
-            setLoading(false);
-            return;
-        }
-
         // Real Supabase
         supabase.auth.getSession().then(({ data: { session: s } }) => {
             setSession(s);
@@ -64,38 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         return () => subscription.unsubscribe();
-    }, [demo]);
+    }, []);
 
     async function signUp(email: string, password: string, fullName: string) {
-        if (demo) {
-            const { user: u, profile: p } = demoSignUp(email, password, fullName);
-            setUser(u);
-            setProfile(p);
-            return;
-        }
         const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
         if (error) throw new Error(mapAuthError(error.message));
     }
 
     async function signIn(email: string, password: string) {
-        if (demo) {
-            const { user: u, profile: p } = demoSignIn(email, password);
-            setUser(u);
-            setProfile(p);
-            return;
-        }
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(mapAuthError(error.message));
     }
 
     async function signOut() {
-        if (demo) {
-            demoSignOut();
-            setUser(null);
-            setProfile(null);
-            setSession(null);
-            return;
-        }
         const { error } = await supabase.auth.signOut();
         if (error) throw new Error('Error al cerrar sesión');
         setUser(null);
@@ -104,10 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     async function resetPassword(email: string) {
-        if (demo) {
-            // En demo simplemente simulamos éxito
-            return;
-        }
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
         });
@@ -115,21 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     async function updatePassword(newPassword: string) {
-        if (demo) {
-            demoUpdatePassword(newPassword);
-            return;
-        }
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw new Error('Error al actualizar contraseña');
     }
 
     async function updateProfile(updates: Partial<Profile>) {
         if (!user) throw new Error('No hay sesión activa');
-        if (demo) {
-            const updated = demoUpdateProfile(user.id, updates);
-            setProfile(updated);
-            return;
-        }
         const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
         if (error) throw new Error('Error al actualizar perfil');
         await loadProfile(user.id);

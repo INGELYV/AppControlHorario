@@ -1,51 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { isDemoMode, demoGetEntries, demoDeleteEntry } from '@/lib/mock-service';
 import { formatTime, formatDate, formatHoursDecimal } from '@/lib/utils';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
 import type { TimeEntry } from '@/types';
 import { Clock, Trash2, ChevronDown, ChevronUp, Calendar, Edit3 } from 'lucide-react';
 
 type FilterPeriod = 'week' | 'month' | 'all';
 
 export default function HistoryPage() {
-    const { user } = useAuth();
-    const [entries, setEntries] = useState<TimeEntry[]>([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<FilterPeriod>('week');
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    useEffect(() => { loadEntries(); }, [user, filter]);
-
-    async function loadEntries() {
-        if (!user) return; setLoading(true);
-        const start = new Date();
-        if (filter === 'week') start.setDate(start.getDate() - 7);
-        else if (filter === 'month') start.setDate(start.getDate() - 30);
-        else start.setFullYear(start.getFullYear() - 1);
-        const dateFrom = start.toISOString().split('T')[0];
-
-        if (isDemoMode()) {
-            setEntries(demoGetEntries(user.id, { dateFrom }));
-            setLoading(false);
-            return;
-        }
-
-        const { data, error } = await supabase.from('time_entries').select('*, pauses(*)')
-            .eq('user_id', user.id).gte('date', dateFrom)
-            .order('date', { ascending: false }).order('clock_in', { ascending: false });
-        if (error) console.error(error); else setEntries((data || []) as TimeEntry[]);
-        setLoading(false);
-    }
+    const daysAgo = filter === 'week' ? 7 : filter === 'month' ? 30 : 365;
+    const { entries, loading, setEntries } = useTimeEntries({ daysAgo });
 
     async function handleDelete(id: string) {
         if (!window.confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
-
-        if (isDemoMode()) {
-            demoDeleteEntry(id);
-            setEntries((prev) => prev.filter((e) => e.id !== id));
-            return;
-        }
 
         const { error } = await supabase.from('time_entries').delete().eq('id', id);
         if (error) { alert('Error al eliminar'); return; }

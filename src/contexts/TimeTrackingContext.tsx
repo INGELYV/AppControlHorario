@@ -3,10 +3,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateWorkedHours } from '@/lib/calculations';
 import type { TimeEntry, Pause, WorkStatus, PauseType } from '@/types';
-import {
-    isDemoMode, demoGetActiveEntry, demoClockIn, demoClockOut,
-    demoStartPause, demoEndPause,
-} from '@/lib/mock-service';
 
 interface TimeTrackingContextType {
     workStatus: WorkStatus;
@@ -29,8 +25,6 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
     const [currentPause, setCurrentPause] = useState<Pause | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const demo = isDemoMode();
-
     const refreshCurrentEntry = useCallback(async () => {
         if (!user) {
             setCurrentEntry(null);
@@ -42,23 +36,6 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
 
         setLoading(true);
 
-        if (demo) {
-            const entry = demoGetActiveEntry(user.id);
-            if (entry) {
-                setCurrentEntry(entry);
-                const ap = entry.pauses?.find((p) => p.end_time === null);
-                setCurrentPause(ap || null);
-                setWorkStatus(entry.status === 'paused' ? 'paused' : 'working');
-            } else {
-                setCurrentEntry(null);
-                setCurrentPause(null);
-                setWorkStatus('idle');
-            }
-            setLoading(false);
-            return;
-        }
-
-        // Supabase real
         const { data, error } = await supabase
             .from('time_entries').select('*, pauses(*)')
             .eq('user_id', user.id)
@@ -83,20 +60,13 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
             setWorkStatus('idle');
         }
         setLoading(false);
-    }, [user, demo]);
+    }, [user]);
 
     useEffect(() => { refreshCurrentEntry(); }, [refreshCurrentEntry]);
 
     async function clockIn() {
         if (!user) throw new Error('No hay sesión activa');
         if (workStatus !== 'idle') throw new Error('Ya hay una jornada activa');
-
-        if (demo) {
-            const entry = demoClockIn(user.id);
-            setCurrentEntry(entry);
-            setWorkStatus('working');
-            return;
-        }
 
         const now = new Date();
         const { data, error } = await supabase
@@ -113,14 +83,6 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
 
         if (currentPause) await endPause();
 
-        if (demo) {
-            demoClockOut(currentEntry.id);
-            setCurrentEntry(null);
-            setCurrentPause(null);
-            setWorkStatus('idle');
-            return;
-        }
-
         const now = new Date();
         const updated = { ...currentEntry, clock_out: now.toISOString() };
         const totalHours = calculateWorkedHours(updated);
@@ -131,19 +93,12 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
         setCurrentEntry(null);
         setCurrentPause(null);
         setWorkStatus('idle');
+        await refreshCurrentEntry();
     }
 
     async function startPause(type: PauseType) {
         if (!user || !currentEntry) throw new Error('No hay jornada activa');
         if (currentPause) throw new Error('Ya hay una pausa activa');
-
-        if (demo) {
-            const pause = demoStartPause(currentEntry.id, type);
-            setCurrentPause(pause);
-            setWorkStatus('paused');
-            await refreshCurrentEntry();
-            return;
-        }
 
         const now = new Date();
         const { data, error } = await supabase.from('pauses')
@@ -157,14 +112,6 @@ export function TimeTrackingProvider({ children }: { children: ReactNode }) {
 
     async function endPause() {
         if (!currentPause || !currentEntry) throw new Error('No hay pausa activa');
-
-        if (demo) {
-            demoEndPause(currentPause.id);
-            setCurrentPause(null);
-            setWorkStatus('working');
-            await refreshCurrentEntry();
-            return;
-        }
 
         const now = new Date();
         const dur = Math.round((now.getTime() - new Date(currentPause.start_time).getTime()) / 60000);

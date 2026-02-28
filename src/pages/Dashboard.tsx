@@ -6,39 +6,21 @@ import { PauseControls } from '@/components/time-tracking/PauseControls';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { WeeklyChart } from '@/components/dashboard/WeeklyChart';
 import { getWeeklyStats, calculateProductivityScore } from '@/lib/calculations';
-import { supabase } from '@/lib/supabase';
-import { isDemoMode, demoGetEntries } from '@/lib/mock-service';
-import type { TimeEntry, WeeklyStats } from '@/types';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
+import type { WeeklyStats } from '@/types';
 import { Clock, TrendingUp, Calendar, Target } from 'lucide-react';
 import { formatHoursDecimal } from '@/lib/utils';
 
 export default function DashboardPage() {
-    const { user, profile } = useAuth();
+    const { profile } = useAuth();
+    const { entries, loading } = useTimeEntries({ daysAgo: 30 });
     const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({ totalHours: 0, averageDaily: 0, daysWorked: 0, dailyBreakdown: [] });
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function loadStats() {
-            if (!user) return;
-            const ago = new Date(); ago.setDate(ago.getDate() - 30);
-            const dateFrom = ago.toISOString().split('T')[0];
-
-            let entries: TimeEntry[] = [];
-
-            if (isDemoMode()) {
-                entries = demoGetEntries(user.id, { dateFrom });
-            } else {
-                const { data, error } = await supabase.from('time_entries').select('*, pauses(*)').eq('user_id', user.id)
-                    .gte('date', dateFrom).order('date', { ascending: false });
-                if (error) { console.error('Error loading stats:', error); setLoading(false); return; }
-                entries = (data || []) as TimeEntry[];
-            }
-
+        if (!loading) {
             setWeeklyStats(getWeeklyStats(entries));
-            setLoading(false);
         }
-        loadStats();
-    }, [user]);
+    }, [entries, loading]);
 
     const ps = calculateProductivityScore(weeklyStats);
     const greeting = new Date().getHours() < 12 ? 'Buenos días' : new Date().getHours() < 18 ? 'Buenas tardes' : 'Buenas noches';

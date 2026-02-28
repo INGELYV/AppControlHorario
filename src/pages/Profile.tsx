@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { User, Lock, Trash2, Save } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -32,9 +33,16 @@ export default function ProfilePage() {
     }
 
     async function handleDeleteAccount() {
-        if (!window.confirm('¿Estás seguro? Esta acción es irreversible.')) return;
+        if (!window.confirm('¿Estás seguro? Se cerrará tu sesión y se solicitará la eliminación de tu cuenta. Esta acción no se puede deshacer.')) return;
         if (!window.confirm('Última oportunidad. ¿Deseas continuar?')) return;
-        await signOut();
+        try {
+            // Eliminar datos del usuario (time_entries y pauses se eliminan en cascada via RLS)
+            await supabase.from('time_entries').delete().eq('user_id', user!.id);
+            await supabase.from('profiles').delete().eq('id', user!.id);
+            await signOut();
+        } catch {
+            alert('Error al eliminar la cuenta. Contacta al administrador.');
+        }
     }
 
     return (
