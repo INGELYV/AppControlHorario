@@ -14,13 +14,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const { profile, signOut, isAdmin } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const navItems = [...NAV_ITEMS];
+    let navItems = [...NAV_ITEMS];
     if (isAdmin) {
-        navItems.push(
-            { path: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard size={20} className="text-accent" /> },
-            { path: '/admin/reports', label: 'Admin Reportes', icon: <BarChart3 size={20} className="text-accent" /> },
-            { path: '/admin/table', label: 'Tabla Maestra', icon: <Table size={20} className="text-accent" /> }
-        );
+        // Para administradores, mostrar SOLO herramientas de administración
+        navItems = [
+            { path: '/admin', label: 'Dashboard Admin', icon: <LayoutDashboard size={20} className="text-accent" /> },
+            { path: '/admin/reports', label: 'Reportes Admin', icon: <BarChart3 size={20} className="text-accent" /> },
+            { path: '/admin/table', label: 'Tabla Maestra', icon: <Table size={20} className="text-accent" /> },
+            { path: '/profile', label: 'Mi Perfil (Admin)', icon: <User size={20} /> }
+        ];
     }
 
     async function handleLogout() { if (window.confirm('¿Deseas cerrar sesión?')) await signOut(); }

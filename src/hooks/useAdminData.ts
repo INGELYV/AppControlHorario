@@ -23,14 +23,16 @@ export function useAdminData() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            // 1. Fetch all profiles
-            const { data: profilesData } = await supabase.from('profiles').select('*');
+            // 1. Fetch all profiles excluding the admin
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profilesData } = await supabase.from('profiles').select('*').neq('id', user?.id);
 
             // 2. Fetch today's entries for all
             const today = new Date().toISOString().split('T')[0];
             const { data: entriesData } = await supabase.from('time_entries')
                 .select('*, pauses(*)')
-                .eq('date', today);
+                .eq('date', today)
+                .neq('user_id', user?.id);
 
             if (profilesData) {
                 const summary: EmployeeSummary[] = profilesData.map(p => {

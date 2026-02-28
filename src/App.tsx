@@ -22,7 +22,10 @@ const PageLoader = () => <div className="protected-route-loader"><div className=
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <PageLoader />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    const isAdmin = user.email === 'ingelyv@gmail.com';
+    return <Navigate to={isAdmin ? "/admin" : "/"} replace />;
+  }
   return <>{children}</>;
 }
 

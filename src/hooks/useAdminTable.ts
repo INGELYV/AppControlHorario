@@ -17,7 +17,8 @@ export function useAdminTable() {
     const [profiles, setProfiles] = useState<Profile[]>([]);
 
     const fetchProfiles = useCallback(async () => {
-        const { data } = await supabase.from('profiles').select('*').order('full_name');
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data } = await supabase.from('profiles').select('*').neq('id', user?.id).order('full_name');
         if (data) setProfiles(data);
     }, []);
 
@@ -28,9 +29,11 @@ export function useAdminTable() {
     }) => {
         setLoading(true);
         try {
+            const { data: { user } } = await supabase.auth.getUser();
             let query = supabase
                 .from('time_entries')
                 .select('*, profiles(full_name, phone, marital_status)')
+                .neq('user_id', user?.id)
                 .order('date', { ascending: false })
                 .order('clock_in', { ascending: false });
 
